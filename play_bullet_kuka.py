@@ -6,6 +6,7 @@ from pybullet_envs.bullet.kuka_diverse_object_gym_env import KukaDiverseObjectEn
 import numpy as np
 
 from stable_baselines3.common.torch_layers import NatureCNN
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecTransposeImage, DummyVecEnv
 from stable_baselines3 import SAC
 
@@ -100,7 +101,7 @@ def render_video(model, try_count=1, prefix='', video_folder="kuka_video"):
     :param video_folder:
     :return:
     """
-    target_env = KukaDiverseObjectEnv(maxSteps=20, isDiscrete=False, renders=True, removeHeightHack=False, isTest=True)
+    target_env = KukaDiverseObjectEnv(maxSteps=20, isDiscrete=False, renders=True, removeHeightHack=True, isTest=True)
     target_env = KukaRecordVideo(env=target_env, name_prefix=prefix, video_folder=video_folder)
 
     cnt = 0
@@ -120,8 +121,9 @@ os.makedirs(result_path, exist_ok=True)
 
 video_record_path = os.path.join(result_path, "video/")
 
-env = KukaDiverseObjectEnv(maxSteps=20, isDiscrete=False, renders=False, removeHeightHack=False)
+env = KukaDiverseObjectEnv(maxSteps=20, isDiscrete=False, renders=False, removeHeightHack=True)
 env = ImageObservationWrapper(env)
+env = Monitor(env, result_path)
 env = DummyVecEnv([lambda: env])
 env = VecTransposeImage(env)
 
@@ -135,8 +137,8 @@ policy_kwargs = dict(
 controller = SAC('CnnPolicy', env, verbose=1, buffer_size=30000, batch_size=256, policy_kwargs=policy_kwargs,
                  tensorboard_log=os.path.join(result_path, "tb_log"))
 
-# controller.learn(total_timesteps=30000, log_interval=4, tb_log_name='kuka_sac')
+controller.learn(total_timesteps=100000, log_interval=4, tb_log_name='kuka_sac')
 # controller.save(path=os.path.join(result_path, "kuka_sac.pkl"))
 
-controller = SAC.load(path=os.path.join(result_path, "kuka_sac.pkl"))
-render_video(controller, "kuka_res", os.path.join(result_path, video_record_path))
+# controller = SAC.load(path=os.path.join(result_path, "kuka_sac.pkl"))
+render_video(controller, try_count=10, prefix="kuka_res", video_folder=os.path.join(result_path, video_record_path))
