@@ -3,35 +3,18 @@
 import os
 
 import numpy as np
-import gym
-import pybullet_envs
 
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.vec_env import VecTransposeImage, DummyVecEnv
 from stable_baselines3.common.torch_layers import NatureCNN
 from stable_baselines3 import SAC
 
-import time
-
-
-class AssignTypeWrapper(gym.Wrapper):
-    def __init__(self, env: gym.Env):
-        super(AssignTypeWrapper, self).__init__(env)
-        low = env.observation_space.low
-        high = env.observation_space.high
-        shape = env.observation_space.shape
-        self.observation_space = gym.spaces.Box(low=low, high=high, shape=shape, dtype=np.uint8)
-
+import kuka_env
 
 output = os.path.abspath("./output/")
 os.makedirs(output, exist_ok=True)
 tfboard_path = os.path.join(output, "sac_learn_log")
 output_model_path = os.path.join(output, "model.pth")
 
-env = gym.make("KukaDiverseObjectGrasping-v0", maxSteps=20, isDiscrete=False, renders=False, removeHeightHack=True)
-env = AssignTypeWrapper(env)
-env = Monitor(env, output)
-env = VecTransposeImage(DummyVecEnv([lambda: env]))
+env = kuka_env.get_train_env()
 
 sac_policy_kwargs = dict(
     features_extractor_class=NatureCNN,
