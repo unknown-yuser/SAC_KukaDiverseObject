@@ -9,6 +9,7 @@ from gym import Wrapper
 from gym.wrappers.monitor import video_recorder
 import pybullet_envs
 
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecTransposeImage, DummyVecEnv
 
 
@@ -56,10 +57,10 @@ class KukaVideoRecorder(Wrapper):
             self.capture_runner_thread.join()
 
 
-def get_train_env():
+def get_train_env(filename: str):
     env = gym.make("KukaDiverseObjectGrasping-v0", maxSteps=20, isDiscrete=False, renders=False, removeHeightHack=True)
     env = AssignTypeWrapper(env)
-    env = Monitor(env, output)
+    env = Monitor(env, filename=filename)
     env = VecTransposeImage(DummyVecEnv([lambda: env]))
     return env
 
